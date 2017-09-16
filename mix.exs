@@ -33,6 +33,7 @@ defmodule SmileysData.Mixfile do
      {:coherence, "~> 0.5.0"},
      {:hashids, "~> 2.0"},
      {:hackney, "~> 1.9", override: true},
+     {:html_sanitize_ex, "~> 1.0.0"},
      {:marco_polo, git: "https://github.com/MyMedsAndMe/marco_polo.git"},
      {:decimal, "~> 1.2", override: true}]
   end

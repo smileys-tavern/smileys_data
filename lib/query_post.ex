@@ -494,17 +494,18 @@ defmodule SmileysData.QueryPost do
           |> Ecto.Query.join(:left, [p], u in User, u.id == p.posterid)
           |> Ecto.Query.join(:left, [p], pm in PostMeta, p.id == pm.postid)
           |> Ecto.Query.join(:left, [p], r in Room, p.superparentid == r.id)
-          |> Ecto.Query.select([p, u, pm, r], %{title: p.title, hash: p.hash, votepublic: p.votepublic, parenttype: p.parenttype, name: u.name, thumb: pm.thumb, link: pm.link, imageurl: pm.image, tags: pm.tags, roomname: r.name})
-          |> Ecto.Query.where([p, u, pm, r], r.type != "private")
+          |> Ecto.Query.select([p, u, pm, r], %{title: p.title, body: p.body, hash: p.hash, votepublic: p.votepublic, parenttype: p.parenttype, name: u.name, thumb: pm.thumb, link: pm.link, imageurl: pm.image, tags: pm.tags, roomname: r.name})
           |> Repo.get_by(id: id)
 
         post_with_url = Map.put_new(post, :posturl, create_post_url(post))
+
+        post_with_body_sample = %{post_with_url | :body => String.slice(HtmlSanitizeEx.strip_tags(post.body), 0..80)}
 
           # I will return when a good deploy strategy is employed for mnesia or alternative cache implemented
           #Amnesia.transaction do
           #  _result = %DbSmileyCache.PostSummary{...} |> DbSmileyCache.PostSummary.write
           #end
-        post_with_url
+        post_with_body_sample
     end 
   end
 

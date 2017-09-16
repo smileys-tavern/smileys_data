@@ -4,7 +4,7 @@ defmodule SmileysData.RegisteredBotMeta do
   schema "registeredbotmetas" do
     field :botname, :string
     field :type, :string
-    field :meta, :json
+    field :meta, :string
 
     timestamps()
   end
