@@ -3,6 +3,7 @@ defmodule SmileysData.RegisteredBot do
 
   schema "registeredbots" do
     field :name, :string
+    field :username, :string
     field :type, :string
     field :callback_module, :string
 
@@ -14,7 +15,7 @@ defmodule SmileysData.RegisteredBot do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [:name, :type, :callback_module])
+    |> cast(params, [:name, :username, :type, :callback_module])
     |> validate_required([:name, :type])
   end
 end

@@ -41,7 +41,6 @@ defmodule SmileysData.QueryPost do
       |> Ecto.Query.join(:left, [p], r in Room, p.superparentid == r.id)
       |> Ecto.Query.select([p, u, pm, r], %{id: p.id, title: p.title, hash: p.hash, posterid: p.posterid, votepublic: p.votepublic, parenttype: p.parenttype, name: u.name, thumb: pm.thumb, link: pm.link, tags: pm.tags, roomname: r.name})
       |> Ecto.Query.where(parenttype: "room")
-      |> Ecto.Query.where([p, u, pm, r], r.type != "private")
       |> Ecto.Query.offset(^offset)
       |> Ecto.Query.limit(^limit)
 
@@ -538,6 +537,8 @@ defmodule SmileysData.QueryPost do
       min_len: 6,
     ])
 
-    Hashids.encode(s, [:os.system_time(:seconds), userid])
+    {_, _, micro} = :os.timestamp
+
+    Hashids.encode(s, [micro, userid])
   end
 end

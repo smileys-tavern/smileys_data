@@ -14,6 +14,7 @@ defmodule SmileysData.Repo.Migrations.CreatePostMeta do
     end
     create unique_index(:postmetas, [:postid])
     create index(:postmetas, [:userid])
+    create index(:postmetas, [:link])
 
   end
 end

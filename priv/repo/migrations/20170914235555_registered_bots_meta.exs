@@ -5,7 +5,7 @@ defmodule SmileysData.Repo.Migrations.RegisteredBotsMeta do
     create table(:registeredbotsmeta) do
       add :botname, :string
       add :type, :string
-      add :meta, :json
+      add :meta, :string
 
       timestamps()
     end

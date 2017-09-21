@@ -1,7 +1,7 @@
 defmodule SmileysData.RegisteredBotMeta do
   use SmileysData.Data, :model
 
-  schema "registeredbotmetas" do
+  schema "registeredbotsmeta" do
     field :botname, :string
     field :type, :string
     field :meta, :string
