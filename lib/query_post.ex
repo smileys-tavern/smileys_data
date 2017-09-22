@@ -31,17 +31,16 @@ defmodule SmileysData.QueryPost do
   end
 
   def summary(limit, order_by, room_id) do
-    summary(limit, order_by, room_id, 0)
+    summary(limit, order_by, room_id, %{})
   end
 
-  def summary(limit, order_by, room_id, offset) do
+  def summary(limit, order_by, room_id, request_params) do
     post = Post
       |> Ecto.Query.join(:left, [p], u in User, u.id == p.posterid)
       |> Ecto.Query.join(:left, [p], pm in PostMeta, p.id == pm.postid)
       |> Ecto.Query.join(:left, [p], r in Room, p.superparentid == r.id)
       |> Ecto.Query.select([p, u, pm, r], %{id: p.id, title: p.title, hash: p.hash, posterid: p.posterid, votepublic: p.votepublic, parenttype: p.parenttype, name: u.name, thumb: pm.thumb, link: pm.link, tags: pm.tags, roomname: r.name})
       |> Ecto.Query.where(parenttype: "room")
-      |> Ecto.Query.offset(^offset)
       |> Ecto.Query.limit(^limit)
 
     post_with_order = case order_by do
@@ -54,6 +53,9 @@ defmodule SmileysData.QueryPost do
       :new ->
         post
           |> Ecto.Query.order_by(desc: :inserted_at)
+      _ ->
+        post
+          |> Ecto.Query.order_by([p], desc: p.voteprivate)
     end
 
     post_room_constraint = case room_id do
@@ -65,14 +67,14 @@ defmodule SmileysData.QueryPost do
     end
 
     post_room_constraint
-      |> Repo.all
+      |> Repo.paginate(request_params)
   end
 
   @doc """
   Return enough post data to summarize posts, queried by specific room
   """
-  def summary_by_room(limit, order_by, room_id) do
-    summary(limit, order_by, room_id)
+  def summary_by_room(limit, order_by, room_id, request_params) do
+    summary(limit, order_by, room_id, request_params)
   end
 
   @doc """
