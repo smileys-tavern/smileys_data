@@ -31,10 +31,10 @@ defmodule SmileysData.QueryPost do
   end
 
   def summary(limit, order_by, room_id) do
-    summary(limit, order_by, room_id, %{})
+    summary(limit, order_by, room_id, %{}, false)
   end
 
-  def summary(limit, order_by, room_id, request_params) do
+  def summary(limit, order_by, room_id, request_params, show_private) do
     post = Post
       |> Ecto.Query.join(:left, [p], u in User, u.id == p.posterid)
       |> Ecto.Query.join(:left, [p], pm in PostMeta, p.id == pm.postid)
@@ -66,7 +66,15 @@ defmodule SmileysData.QueryPost do
           |> Ecto.Query.where(parentid: ^room_id) 
     end
 
-    post_room_constraint
+    post_with_private = cond do
+      !show_private ->
+        post_room_constraint
+          |> Ecto.Query.where([p, u, pm, r], r.type != "private")
+      true ->
+        post_room_constraint
+    end
+
+    post_with_private
       |> Repo.paginate(request_params)
   end
 
@@ -74,7 +82,7 @@ defmodule SmileysData.QueryPost do
   Return enough post data to summarize posts, queried by specific room
   """
   def summary_by_room(limit, order_by, room_id, request_params) do
-    summary(limit, order_by, room_id, request_params)
+    summary(limit, order_by, room_id, request_params, true)
   end
 
   @doc """
