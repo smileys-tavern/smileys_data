@@ -236,9 +236,9 @@ defmodule SmileysData.QueryPost do
 
                 post = put_in post.votepublic, 1
 
-                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op}}
+                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
               else
-                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op}}
+                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
               end
             {:error, changeset} ->
               {:error, changeset}

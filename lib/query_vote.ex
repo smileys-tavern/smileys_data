@@ -16,15 +16,15 @@ defmodule SmileysData.QueryVote do
     else
       # rep adjustment
       room = Room |> Repo.get_by(id: post.superparentid)
-      
-      SmileysData.QueryUser.update_user_reputation(post, user, room, 1)
-
-      if post.voteprivate > 220 do
-        SmileysData.QueryRoom.update_room_reputation(user, room, 1)
-      end
 
       case Repo.insert(changeset) do
         {:ok, _vote} ->
+          SmileysData.QueryUser.update_user_reputation(post, user, room, 1)
+
+          if post.voteprivate > 220 do
+            SmileysData.QueryRoom.update_room_reputation(user, room, 1)
+          end
+
           # TODO: refactor slightly to fix concurrency (update +=)
         	vote_total = post.voteprivate + user.reputation
           vote_total_alltime = post.votealltime + user.reputation
@@ -51,14 +51,14 @@ defmodule SmileysData.QueryVote do
       # rep adjustment
       room = Room |> Repo.get_by(id: post.superparentid)
 
-      SmileysData.QueryUser.update_user_reputation(post, user, room, -1)
-
-      if post.voteprivate > 220 do
-        SmileysData.QueryRoom.update_room_reputation(user, room, -1)
-      end
-
       case Repo.insert(changeset) do
         {:ok, _vote} ->
+          SmileysData.QueryUser.update_user_reputation(post, user, room, -1)
+
+          if post.voteprivate < -220 do
+            SmileysData.QueryRoom.update_room_reputation(user, room, -1)
+          end
+
           vote_total = post.voteprivate - user.reputation
           post_changeset = Post.changeset(post, %{"votepublic" => post.votepublic - 1, "voteprivate" => vote_total, "votealltime" => vote_total})
 
