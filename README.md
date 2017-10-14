@@ -9,7 +9,7 @@ by adding `smileys_data` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:smileys_data, "~> 0.0.1"}]
+  [{:smileys_data, "~> 0.0.6"}]
 end
 ```
 
