@@ -228,7 +228,7 @@ defmodule SmileysData.QueryPost do
       })
 
       cond do
-        validate_post_body(body) ->
+        validate_comment_body(body) ->
           case Repo.insert(changeset) do
             {:ok, post} ->
               if (user.name != "amysteriousstranger") do
@@ -537,7 +537,7 @@ defmodule SmileysData.QueryPost do
   @doc """
   Validate that the body of the post stays to the required characters
   """
-  def validate_post_body(body) do
+  def validate_comment_body(body) do
     String.match?(body, ~r/^[a-zA-Z0-9 \s.,?!:;\-"'\[\])(}{#%=*\^\/_]+$/)
   end
 

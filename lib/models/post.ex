@@ -28,6 +28,6 @@ defmodule SmileysData.Post do
     |> validate_length(:title, min: 2)
     |> validate_length(:title, max: 350)
     |> validate_format(:title, ~r/^[a-zA-Z0-9 \-\–\.,\/'’‘%|?!:\)\(#&;]+$/)
-    |> validate_length(:body, max: 3800)
+    |> validate_length(:body, max: 11099)
   end
 end

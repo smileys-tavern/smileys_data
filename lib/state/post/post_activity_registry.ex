@@ -75,10 +75,10 @@ defmodule SmileysData.State.Post.ActivityRegistry do
 
   ## Server Callbacks
   def init(:ok) do
-	post_hashes = %{}
-	refs  = %{}
-	
-	{:ok, {post_hashes, refs}}
+  	post_hashes = %{}
+  	refs  = %{}
+  	
+  	{:ok, {post_hashes, refs}}
   end
 
   def handle_call({:lookup, post_hash}, _from, {post_hashes, _} = state) do
