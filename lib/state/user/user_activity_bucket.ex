@@ -24,7 +24,6 @@ defmodule SmileysData.State.User.ActivityBucket do
   Get the activity of one of a users posts
   """
   def get_activity(user_bucket, %Activity{hash: hash}) do
-    IO.inspect "HI LOOKING FOR THIS HASH " <> hash
     Agent.get(user_bucket, &Map.get(&1, hash))
   end
 

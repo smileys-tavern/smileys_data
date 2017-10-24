@@ -27,7 +27,6 @@ defmodule SmileysData.State.Room.ActivityBucket do
   Get the activity map of a room
   """
   def get_activity(room_bucket) do
-    IO.inspect("ATTEMPTING A CALL")
     GenServer.call(room_bucket, :retrieve)
   end
 
