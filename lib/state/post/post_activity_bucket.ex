@@ -1,24 +1,33 @@
 defmodule SmileysData.State.Post.ActivityBucket do
   @moduledoc """
-  A bucket representing all of a posts activity. Currently only contains a comment count
+  A bucket representing all of a posts activity. Currently only contains a comment count and lives for @post_activity_hours_to_live
   """
 
-  use Agent
+  use GenServer
+
+  @post_activity_hours_to_live 48
 
   alias SmileysData.State.Post.Activity
 
   @doc """
   Start with a new empty activity bucket
   """
-  def start_link(_opts) do
-    Agent.start_link(fn -> %Activity{comments: 0} end)
+  def start_link(name) do
+    GenServer.start_link(__MODULE__, :ok, [name: {:via, :syn, name}])
   end
+
+  def init(:ok) do  
+    {:ok, %Activity{}}
+  end
+
+  # Client
+  ##########################
 
   @doc """
   Get the activity map of a post
   """
   def get_activity(post_bucket) do
-    Agent.get(post_bucket, fn state -> state end)
+    GenServer.call(post_bucket, :retrieve)
   end
 
   @doc """
@@ -26,11 +35,19 @@ defmodule SmileysData.State.Post.ActivityBucket do
   counts since this is used on a per event basis.  Checks size of activity map.
   Returns new state of activity map
   """
-  def increment_comment_count(post_bucket, new_comments_amt \\ 1)
-  def increment_comment_count(post_bucket, new_comments_amt) do
-    Agent.get_and_update(post_bucket, fn %Activity{comments: comments} = activity ->
-    	new_activity = Map.put(activity, :comments, comments + new_comments_amt)
-    	{new_activity, new_activity}
-    end)
+  def increment_post_bucket_activity(room_bucket, activity) do
+    GenServer.call(room_bucket, {:update, activity})
+  end
+
+  # Server
+  ###########################
+
+  def handle_call(:retrieve, _from, state) do
+    {:reply, state, state}
+  end
+
+  def handle_call({:update, %Activity{comments: new_comments}}, _from, %Activity{comments: comments, hash: hash}) do
+    new_activity_state = %Activity{hash: hash, comments: new_comments + comments}
+    {:reply, new_activity_state, new_activity_state}
   end
 end
