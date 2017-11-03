@@ -36,7 +36,7 @@ defmodule SmileysData.State.Room.ActivityBucket do
   def increment_room_bucket_activity(room_bucket, %Activity{} = activity) do
     new_activity_state = GenServer.call(room_bucket, {:update, activity})
 
-    set_activity_elimination_timer(activity)
+    set_activity_elimination_timer(room_bucket, activity)
 
     new_activity_state
   end
@@ -44,10 +44,10 @@ defmodule SmileysData.State.Room.ActivityBucket do
   @doc """
   Set a timer that reverses activity counts when complete
   """
-  def set_activity_elimination_timer(%Activity{room: room, subs: subs, new_posts: new_posts, hot_posts: hot_posts}) do
+  def set_activity_elimination_timer(room_bucket, %Activity{room: room, subs: subs, new_posts: new_posts, hot_posts: hot_posts}) do
     activity_reversed = %Activity{room: room, subs: subs * -1, new_posts: new_posts * -1, hot_posts: hot_posts * -1}
 
-    Process.send_after(self(), {:expire_activity, activity_reversed}, @room_activity_hours_to_live * 60 * 60 * 1000)
+    Process.send_after(room_bucket, {:expire_activity, room_bucket, activity_reversed}, @room_activity_hours_to_live * 60 * 60 * 1000)
   end
 
   # Server
@@ -61,9 +61,9 @@ defmodule SmileysData.State.Room.ActivityBucket do
     {:reply, new_activity_state, new_activity_state}
   end
 
-  def handle_info({:expire_activity, activity_reversed}, _) do
+  def handle_info({:expire_activity, room_bucket, activity_reversed}, _) do
 
-    new_activity_state = increment_room_bucket_activity(self(), activity_reversed)
+    new_activity_state = GenServer.call(room_bucket, {:update, activity_reversed})
 
     {:noreply, new_activity_state}
   end

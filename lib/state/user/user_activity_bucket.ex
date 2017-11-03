@@ -79,10 +79,11 @@ defmodule SmileysData.State.User.ActivityBucket do
   Put new notification in a users bucket, filed under the user name who pinged, since a user can only ping the same person once.
   Returns new state
   """
-  def add_new_activity(user_bucket, %Notification{pinged_by: user_name} = notification) do
+  def add_new_activity(user_bucket, %Notification{pinged_by: user_name, url: url} = notification) do
     user_activity = Agent.get_and_update(user_bucket, fn state -> 
       new_state = Map.update(state, user_name, Map.replace(notification, :time, Time.utc_now()), fn notif_to_update ->
         Map.replace(notif_to_update, :time, Time.utc_now())
+          |> Map.replace(:url, url)
       end)
       {new_state, new_state}
     end)

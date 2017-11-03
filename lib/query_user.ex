@@ -146,13 +146,16 @@ defmodule SmileysData.QueryUser do
   @doc """
   Return the permission set that applies to the passed User
   """
-  def user_permission_level(user) do
-    # TODO: refactor with database table or config
-    case user.name do
-      "subetei" ->
-        %{khan: Guardian.Permissions.max}
-      _ ->
-        %{default: Guardian.Permissions.max}
-    end
+  def user_permission_level(_user) do
+    %{default: Guardian.Permissions.max}
+  end
+
+  def create_hash(user_ip) do
+    s = Hashids.new([
+      salt: "smileysuser-mystery",
+      min_len: 6,
+    ])
+
+    Hashids.encode(s, Tuple.to_list(user_ip))
   end
 end

@@ -3,7 +3,7 @@ defmodule SmileysData.QueryPost do
   require Ecto.Query
 
 
-  alias SmileysData.{Post, Room, Comment, PostMeta, User, Repo}
+  alias SmileysData.{Post, AnonymousPost, Room, Comment, PostMeta, User, Repo}
 
   @doc """
   Retrieve post specific data via hash key
@@ -209,43 +209,40 @@ defmodule SmileysData.QueryPost do
     replyToPost = Post |> Repo.get_by(hash: replyToHash)
     room = Room |> Repo.get_by(id: op.superparentid)
 
-    if is_post_frequency_limit(user) do
-      {:post_frequency_violation, nil}
-    else
-      changeset = Post.changeset(%Post{}, %{
-        "body" => body, 
-        "title" => "reply", 
-        "superparentid" => room.id,
-        "parentid" => replyToPost.id, 
-        "parenttype" => "comment",
-        "posterid" => user.id,
-        "age" => 0,
-        "hash" => create_hash(user.id, room.name),
-        "votepublic" => 0,
-        "voteprivate" => user.reputation,
-        "votealltime" => user.reputation,
-        "ophash" => opHash
-      })
+    case is_post_frequency_limit(user) do
+      false ->
+        changeset = Post.changeset(%Post{}, %{
+          "body" => body, 
+          "title" => "reply", 
+          "superparentid" => room.id,
+          "parentid" => replyToPost.id, 
+          "parenttype" => "comment",
+          "posterid" => user.id,
+          "age" => 0,
+          "hash" => create_hash(user.id, room.name),
+          "votepublic" => 0,
+          "voteprivate" => user.reputation,
+          "votealltime" => user.reputation,
+          "ophash" => opHash
+        })
 
-      cond do
-        validate_comment_body(body) ->
-          case Repo.insert(changeset) do
-            {:ok, post} ->
-              if (user.name != "amysteriousstranger") do
-                SmileysData.QueryVote.upvote(post, user)
+        case Repo.insert(changeset) do
+          {:ok, post} ->
+            if (user.name != "amysteriousstranger") do
+              SmileysData.QueryVote.upvote(post, user)
 
-                post = put_in post.votepublic, 1
+              post = put_in post.votepublic, 1
 
-                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
-              else
-                {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
-              end
-            {:error, changeset} ->
-              {:error, changeset}
-          end
-        true ->
-          {:body_invalid, nil}
-      end
+              {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
+            else
+              {:ok, %{:comment => Map.merge(post, %{:depth => (depth + 1), :name => user.name}), :room => room, :op => op, :reply_to => replyToPost}}
+            end
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+        
+      limit ->
+        {:post_frequency_violation, limit}
     end
   end
 
@@ -289,38 +286,39 @@ defmodule SmileysData.QueryPost do
 
       changeset = Post.changeset(%Post{}, request_params)
 
-      if is_post_frequency_limit(user) do
-        {:post_frequency_violation, nil}
-      end
+      case is_post_frequency_limit(user) do
+        false ->
+          # insert post
+          case Repo.insert(changeset) do
+            {:ok, post} ->
+              # auto-upvote it if not an anonymous post
+              if (user.id != Application.get_env(:smileys, :mysteryuser)) do
+                SmileysData.QueryVote.upvote(post, user)
+              end
 
-      # insert post
-      case Repo.insert(changeset) do
-        {:ok, post} ->
-          # auto-upvote it if not an anonymous post
-          if (user.id != Application.get_env(:smileys, :mysteryuser)) do
-            SmileysData.QueryVote.upvote(post, user)
+              _result = cond do
+                image_upload ->
+                  changeset_meta = PostMeta.changeset(%PostMeta{}, %{"userid" => user.id, "postid" => post.id, "thumb" => image_upload[:thumb],
+                    "tags" => meta_params["tags"], "image" => image_upload[:image], "link" => meta_params["link"]})
+
+                  # insert post meta
+                  Repo.insert!(changeset_meta)
+
+                String.length(meta_params["link"]) > 0 || String.length(meta_params["tags"]) > 0 ->
+                  changeset_meta = PostMeta.changeset(%PostMeta{}, %{"userid" => user.id, "postid" => post.id, "tags" => meta_params["tags"], "link" => meta_params["link"]})
+
+                  Repo.insert!(changeset_meta)
+                    
+                true ->
+                  nil
+              end
+            
+              {:ok, post}
+            {:error, changeset} ->
+              {:error, changeset}
           end
-
-          _result = cond do
-            image_upload ->
-              changeset_meta = PostMeta.changeset(%PostMeta{}, %{"userid" => user.id, "postid" => post.id, "thumb" => image_upload[:thumb],
-                "tags" => meta_params["tags"], "image" => image_upload[:image], "link" => meta_params["link"]})
-
-              # insert post meta
-              Repo.insert!(changeset_meta)
-
-            String.length(meta_params["link"]) > 0 || String.length(meta_params["tags"]) > 0 ->
-              changeset_meta = PostMeta.changeset(%PostMeta{}, %{"userid" => user.id, "postid" => post.id, "tags" => meta_params["tags"], "link" => meta_params["link"]})
-
-              Repo.insert!(changeset_meta)
-                
-            true ->
-              nil
-          end
-
-          {:ok, post}
-        {:error, changeset} ->
-          {:error, changeset}
+        limit ->
+          {:post_frequency_violation, limit}
       end
     end
   end
@@ -344,11 +342,26 @@ defmodule SmileysData.QueryPost do
   Return the number of seconds since the given users last post
   """
   def get_seconds_since_last_post(user) do
-    case user do
+    query_string = case user do
       nil -> 
         {:error, "no user"}
+      %{user_token: user_token} ->
+        # note: unsafe query, only internal functions should access
+        {:ok, "
+          SELECT to_char(
+            float8 (
+              extract(epoch from NOW() - INTERVAL '8 hours') - 
+              extract(epoch from inserted_at - INTERVAL '8 hours')
+            ), 'FM999999999999999999'
+            ) AS time_since_last_post
+          FROM anonymousposts
+          WHERE hash = '" <> user_token <> "'
+          ORDER BY inserted_at DESC
+          LIMIT 1
+        "}
       _ ->
-        qry = "
+        # note: unsafe query, only internal functions should access
+        {:ok, "
           SELECT to_char(
             float8 (
               extract(epoch from NOW() - INTERVAL '8 hours') - 
@@ -359,9 +372,12 @@ defmodule SmileysData.QueryPost do
           WHERE posterid = " <> Integer.to_string(user.id) <> "
           ORDER BY inserted_at DESC
           LIMIT 1
-        "
+        "}
+    end
 
-        res = Ecto.Adapters.SQL.query!(Repo, qry, [])
+    case query_string do
+      {:ok, query} ->
+        res = Ecto.Adapters.SQL.query!(Repo, query, [])
 
         cols = Enum.map res.columns, &(String.to_atom(&1))
 
@@ -375,6 +391,8 @@ defmodule SmileysData.QueryPost do
           post_row ->
             {:ok, post_row[:time_since_last_post]}
         end
+      error ->
+        error
     end
   end
 
@@ -397,6 +415,22 @@ defmodule SmileysData.QueryPost do
       _ ->
         {:error, 0}
     end
+  end
+
+  @doc """
+  Record the happening of an anonymous post
+  """
+  def add_anonymous_record(hash, postid) do
+    changeset = AnonymousPost.changeset(%AnonymousPost{}, %{"hash" => hash, "postid" => postid})
+
+    Repo.insert(changeset)
+  end
+
+  @doc """
+  Retrieve the last anonymous post record by user token
+  """
+  def get_last_anonymous_post(hash) do
+    AnonymousPost |> Repo.get_by(hash: hash)
   end
 
   @doc """
@@ -430,7 +464,6 @@ defmodule SmileysData.QueryPost do
             false
           !seconds_since_last_post ->
             true
-          # TODO: make reputation limits configurable
           user.reputation >= 50 ->
             case post_limits do
               [_,_,_,limit] ->
@@ -438,7 +471,7 @@ defmodule SmileysData.QueryPost do
                   seconds_since_last_post > String.to_integer(limit) ->
                     false
                   true ->
-                    true
+                    limit
                 end
               _ ->
                 false
@@ -450,7 +483,7 @@ defmodule SmileysData.QueryPost do
                   seconds_since_last_post > String.to_integer(limit) ->
                     false
                   true ->
-                    true
+                    limit
                 end
               _ ->
                 false
@@ -462,7 +495,7 @@ defmodule SmileysData.QueryPost do
                   seconds_since_last_post > String.to_integer(limit) ->
                     false
                   true ->
-                    true
+                    limit
                 end
               _ ->
                 false
@@ -474,7 +507,7 @@ defmodule SmileysData.QueryPost do
                   seconds_since_last_post > String.to_integer(limit) ->
                     false
                   true ->
-                    true
+                    limit
                 end
               _ ->
                 false
