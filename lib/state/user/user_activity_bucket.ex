@@ -100,7 +100,7 @@ defmodule SmileysData.State.User.ActivityBucket do
   Set a timer that reverses activity counts when complete
   """
   def set_activity_elimination_timer(user_bucket, activity) do
-    Process.send_after(user_bucket, {:expire_activity, user_bucket, activity}, @activity_hours_to_live * 60 * 60 * 1000)
+    Process.send_after(user_bucket, {:expire_activity, activity}, @activity_hours_to_live * 60 * 60 * 1000)
   end
 
   defp map_size_check(user_bucket, activity) do
@@ -176,11 +176,15 @@ defmodule SmileysData.State.User.ActivityBucket do
     {:reply, new_state, new_state}
   end
 
-  def handle_info({:expire_activity, user_bucket, activity}, _) do
+  def handle_info({:expire_activity, activity}, state) do
+    key = case activity do
+      %Activity{hash: post_hash} ->
+        post_hash
+      %Notification{pinged_by: user_name} ->
+        user_name
+    end
 
-    new_activity_state = delete_activity(user_bucket, activity)
-
-    {:noreply, new_activity_state}
+    {:noreply, Map.pop(state, key)}
   end
 
   def handle_info(_, state) do
