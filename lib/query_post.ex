@@ -411,9 +411,8 @@ defmodule SmileysData.QueryPost do
       {:ok, result} ->
         %{num_rows: rows} = result
         {:ok, rows}
-        rows
       _ ->
-        {:error, 0}
+        {:error, "Error running decay query"}
     end
   end
 

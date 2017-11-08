@@ -5,9 +5,9 @@ defmodule SmileysData.State.Post.ActivityBucket do
 
   use GenServer
 
-  @post_activity_hours_to_live 48
-
   alias SmileysData.State.Post.Activity
+
+  @post_server_hours_to_live 72
 
   @doc """
   Start with a new empty activity bucket
@@ -16,7 +16,9 @@ defmodule SmileysData.State.Post.ActivityBucket do
     GenServer.start_link(__MODULE__, :ok, [name: {:via, :syn, name}])
   end
 
-  def init(:ok) do  
+  def init(:ok) do
+    Process.send_after(self(), :timeout, @post_server_hours_to_live * 60 * 60 * 1000)
+
     {:ok, %Activity{}}
   end
 
@@ -50,4 +52,10 @@ defmodule SmileysData.State.Post.ActivityBucket do
     new_activity_state = %Activity{hash: hash, comments: new_comments + comments}
     {:reply, new_activity_state, new_activity_state}
   end
+
+  def handle_info(:timeout, state) do
+    {:stop, :normal, state}
+  end
+
+  def handle_info(_, state), do: {:noreply, state}
 end

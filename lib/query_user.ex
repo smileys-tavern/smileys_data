@@ -134,10 +134,9 @@ defmodule SmileysData.QueryUser do
         # max rep 51
         if (user.name != vote.username) do
           Ecto.Query.from(u in User, 
-            where: u.name == ^vote.username, where: u.reputation < 51, where: u.reputation > 0, 
+            where: u.name == ^vote.username, where: u.reputation < 51, where: u.reputation > -51, 
             update: [inc: [reputation: ^finalAdjust]]
-          )
-            |> Repo.update_all([])
+          ) |> Repo.update_all([])
         end
       end
     end

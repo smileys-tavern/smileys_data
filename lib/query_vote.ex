@@ -19,10 +19,10 @@ defmodule SmileysData.QueryVote do
 
       case Repo.insert(changeset) do
         {:ok, _vote} ->
-          SmileysData.QueryUser.update_user_reputation(post, user, room, 1)
+          SmileysData.ContentSorting.DefaultSorter.user_adjust(post, user, room, 1)
 
           if post.voteprivate > 220 do
-            SmileysData.QueryRoom.update_room_reputation(user, room, 1)
+            SmileysData.ContentSorting.DefaultSorter.room_adjust(post, user, room, 1)
           end
 
           # TODO: refactor slightly to fix concurrency (update +=)
@@ -53,10 +53,10 @@ defmodule SmileysData.QueryVote do
 
       case Repo.insert(changeset) do
         {:ok, _vote} ->
-          SmileysData.QueryUser.update_user_reputation(post, user, room, -1)
+          SmileysData.ContentSorting.DefaultSorter.user_adjust(post, user, room, -1)
 
           if post.voteprivate < -220 do
-            SmileysData.QueryRoom.update_room_reputation(user, room, -1)
+            SmileysData.ContentSorting.DefaultSorter.room_adjust(post, user, room, -1)
           end
 
           vote_total = post.voteprivate - user.reputation
