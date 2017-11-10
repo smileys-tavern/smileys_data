@@ -7,8 +7,10 @@ defmodule SmileysData.State.User.ActivityBucket do
 
   use GenServer
 
+  alias SmileysData.State.Timer.ActivityExpire
+
   alias SmileysData.State.User.Notification
-  alias SmileysData.State.User.Activity 
+  alias SmileysData.State.User.Activity
 
   @max_activity_count 30
   @prune_amount 10
@@ -24,7 +26,7 @@ defmodule SmileysData.State.User.ActivityBucket do
   end
 
   def init(:ok) do
-    {:ok, %{}}
+    {:ok, %{}, @activity_hours_to_live * 60 * 60 * 1000}
   end
 
   # Client
@@ -73,7 +75,7 @@ defmodule SmileysData.State.User.ActivityBucket do
   def add_new_activity(user_bucket, %Activity{hash: post_hash} = activity) do
     user_activity = GenServer.call(user_bucket, {:add_activity, activity})
 
-    set_activity_elimination_timer(user_bucket, activity)
+    ActivityExpire.expire_activity(activity, @activity_hours_to_live * 60 * 60 * 1000)
 
     # Maintainance operation
     _ = map_size_check(user_bucket, user_activity)
@@ -88,19 +90,12 @@ defmodule SmileysData.State.User.ActivityBucket do
   def add_new_activity(user_bucket, %Notification{pinged_by: user_name} = notification) do
     user_activity = GenServer.call(user_bucket, {:add_notification, notification})
 
-    set_activity_elimination_timer(user_bucket, notification)
+    ActivityExpire.expire_activity(notification, @activity_hours_to_live * 60 * 60 * 1000)
 
     # Maintainance operation
     _ = map_size_check(user_bucket, user_activity)
 
     user_activity[user_name]
-  end
-
-  @doc """
-  Set a timer that reverses activity counts when complete
-  """
-  def set_activity_elimination_timer(user_bucket, activity) do
-    Process.send_after(user_bucket, {:expire_activity, activity}, @activity_hours_to_live * 60 * 60 * 1000)
   end
 
   defp map_size_check(user_bucket, activity) do
@@ -144,7 +139,9 @@ defmodule SmileysData.State.User.ActivityBucket do
   # Server
 
   def handle_cast({:delete_one, key}, activity) do
-    {:noreply, Map.pop(activity, key)}
+    {_, new_activity_state} = Map.pop(activity, key)
+
+    {:noreply, new_activity_state}
   end
 
   def handle_cast(:delete, _) do

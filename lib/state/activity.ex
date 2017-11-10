@@ -29,6 +29,11 @@ defprotocol SmileysData.State.Activity do
   def update_item(activity)
 
   @doc """
+  Reverse an activity action. Often used during timeout implementations when activities should only report within a certain time window
+  """
+  def remove_item(activity)
+
+  @doc """
   Create a new bucket and add it to the activity supervisor
   """
   def create_bucket(activity)
@@ -59,25 +64,29 @@ end
     end
 
     def retrieve_item(activity) do
-	  ActivityBucket.get_activity(lookup_bucket(activity), activity)
-	end
+  	  ActivityBucket.get_activity(lookup_bucket(activity), activity)
+  	end
 
-	def update_item(activity) do
-  	  ActivityBucket.add_new_activity(lookup_bucket(activity), activity)
-	end
+  	def update_item(activity) do
+    	ActivityBucket.add_new_activity(lookup_bucket(activity), activity)
+  	end
 
-	def create_bucket(activity) do
+    def remove_item(activity) do
+      ActivityBucket.delete_activity(lookup_bucket(activity), activity)  
+    end
+
+  	def create_bucket(activity) do
       case UserActivitySupervisor.start_child(get_bucket_name(activity)) do
         {:ok, pid} ->
           pid
         _ ->
           :syn.find_by_key(get_bucket_name(activity))
       end
-	end
+  	end
 
     def get_bucket_name(%Activity{user_name: user_name}) do
-	  "user_activity_" <> user_name
-	end
+  	  "user_activity_" <> user_name
+  	end
   end
 
   # UserNotification
@@ -99,25 +108,29 @@ end
     end
 
     def retrieve_item(activity) do
-	  ActivityBucket.get_activity(lookup_bucket(activity), activity)
-	end
+  	  ActivityBucket.get_activity(lookup_bucket(activity), activity)
+  	end
 
-	def update_item(activity) do
+	  def update_item(activity) do
   	  ActivityBucket.add_new_activity(lookup_bucket(activity), activity)
-	end
+	  end
 
-	def create_bucket(activity) do
+    def remove_item(activity) do
+      ActivityBucket.delete_activity(lookup_bucket(activity), activity)
+    end
+
+	  def create_bucket(activity) do
       case UserActivitySupervisor.start_child(get_bucket_name(activity)) do
         {:ok, pid} ->
           pid
         _ ->
           :syn.find_by_key(get_bucket_name(activity))
       end
-	end
+	  end
 
     def get_bucket_name(%Notification{user_name: user_name}) do
-	  "user_activity_" <> user_name
-	end
+	    "user_activity_" <> user_name
+	  end
   end
 
   # RoomActivity
@@ -140,21 +153,25 @@ end
     end
 
   	def retrieve_item(activity) do
-	  ActivityBucket.get_activity(lookup_bucket(activity))
-	end
+	    ActivityBucket.get_activity(lookup_bucket(activity))
+	  end
 
-	def update_item(activity) do
-	  ActivityBucket.increment_room_bucket_activity(lookup_bucket(activity), activity)
-	end
+	  def update_item(activity) do
+	    ActivityBucket.increment_room_bucket_activity(lookup_bucket(activity), activity)
+	  end
 
-	def create_bucket(activity) do
-	  case RoomActivitySupervisor.start_child(get_bucket_name(activity)) do
+    def remove_item(%Activity{room: room, subs: subs, new_posts: new_posts, hot_posts: hot_posts} = activity) do
+      ActivityBucket.increment_room_bucket_activity(lookup_bucket(activity), %Activity{room: room, subs: subs * -1, new_posts: new_posts * -1, hot_posts: hot_posts * -1}, :no_expire)
+    end
+
+	  def create_bucket(activity) do
+	    case RoomActivitySupervisor.start_child(get_bucket_name(activity)) do
         {:ok, pid} ->
           pid
         _ ->
           :syn.find_by_key(get_bucket_name(activity))
       end
-	end
+	  end
 
   	def get_bucket_name(%Activity{room: room_name}) do
   	  "room_activity_" <> room_name
@@ -181,21 +198,25 @@ end
     end
 
   	def retrieve_item(activity) do
-	  ActivityBucket.get_activity(lookup_bucket(activity))
-	end
+	    ActivityBucket.get_activity(lookup_bucket(activity))
+	  end
 
-	def update_item(activity) do
-	  ActivityBucket.increment_post_bucket_activity(lookup_bucket(activity), activity)
-	end	
+    def remove_item(%Activity{hash: hash, comments: comments} = activity) do
+      ActivityBucket.increment_post_bucket_activity(lookup_bucket(activity), %Activity{hash: hash, comments: comments * -1})
+    end
 
- 	def create_bucket(activity) do
-	  case PostActivitySupervisor.start_child(get_bucket_name(activity)) do
+	  def update_item(activity) do
+	    ActivityBucket.increment_post_bucket_activity(lookup_bucket(activity), activity)
+	  end	
+
+ 	  def create_bucket(activity) do
+	    case PostActivitySupervisor.start_child(get_bucket_name(activity)) do
         {:ok, pid} ->
           pid
         _ ->
           :syn.find_by_key(get_bucket_name(activity))
       end
-	end
+	  end
  	
    	def get_bucket_name(%Activity{hash: hash}) do
   	  "post_activity_" <> hash

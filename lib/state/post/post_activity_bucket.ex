@@ -17,9 +17,7 @@ defmodule SmileysData.State.Post.ActivityBucket do
   end
 
   def init(:ok) do
-    Process.send_after(self(), :timeout, @post_server_hours_to_live * 60 * 60 * 1000)
-
-    {:ok, %Activity{}}
+    {:ok, %Activity{}, @post_server_hours_to_live * 60 * 60 * 1000}
   end
 
   # Client
@@ -49,7 +47,9 @@ defmodule SmileysData.State.Post.ActivityBucket do
   end
 
   def handle_call({:update, %Activity{comments: new_comments}}, _from, %Activity{comments: comments, hash: hash}) do
+    
     new_activity_state = %Activity{hash: hash, comments: new_comments + comments}
+    
     {:reply, new_activity_state, new_activity_state}
   end
 
