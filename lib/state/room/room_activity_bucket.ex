@@ -9,7 +9,7 @@ defmodule SmileysData.State.Room.ActivityBucket do
 
   alias SmileysData.State.Room.Activity
 
-  @room_activity_hours_to_live 6
+  @room_activity_hours_to_live 12
 
 
   @doc """

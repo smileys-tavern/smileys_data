@@ -32,23 +32,11 @@ defmodule SmileysData.QueryRoom do
   @doc """
   Adjust the reputation of an entire room (the room value, not the users therein)
   """
-  def update_room_reputation(user, room, modifier) do
-    amountAdjust = cond do
-      user.reputation >= 45 ->
-        1
-      true ->
-        0
-    end
-
-    if amountAdjust > 0 do
-        # if poster did opposite of what reputable voter did, reverse adjustment
-        finalAdjust = modifier * amountAdjust
-
-        Ecto.Query.from(r in Room, 
-          where: r.id == ^room.id, 
-          update: [inc: [reputation: ^finalAdjust]]
-        ) |> Repo.update_all([])
-    end
+  def update_room_reputation(room, adjustValue) do
+    Ecto.Query.from(r in Room, 
+      where: r.id == ^room.id, 
+      update: [inc: [reputation: ^adjustValue]]
+    ) |> Repo.update_all([])
   end
 
   @doc """

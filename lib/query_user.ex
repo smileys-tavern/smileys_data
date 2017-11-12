@@ -106,39 +106,22 @@ defmodule SmileysData.QueryUser do
       |> Repo.paginate(request_params)
   end
 
-  def update_user_reputation(post, user, room, modifier) do
-    amountAdjust = cond do
-      room.reputation > 0 && SmileysData.QueryRoom.room_is_moderator(user.moderating, room.id) ->
-        2
-      user.reputation >= 30 ->
-        1
+  @doc """
+  Call this when voting on and against original content
+  TODO: move most of the logic 
+  """
+  def update_user_reputation(post, adjustValue) do
+    cond do
+      adjustValue >= 0 ->
+        Ecto.Query.from(u in User, 
+          where: u.id == ^post.posterid, where: u.reputation < 100, 
+          update: [inc: [reputation: ^adjustValue]]
+        ) |> Repo.update_all([])
       true ->
-        0
-    end
-
-    if amountAdjust > 0 do
-      # TODO: move to vote query
-      votes = Vote |> Ecto.Query.where(postid: ^post.id) |> Repo.all
-
-      for vote <- votes do
-        # if poster did opposite of what reputable voter did, reverse adjustment
-        finalAdjust = cond do
-          modifier > 0 && vote.vote < 0 ->
-            amountAdjust * -1
-          modifier < 0 && vote.vote > 0 ->
-            amountAdjust * -1
-          true ->
-            amountAdjust
-        end
-
-        # max rep 51
-        if (user.name != vote.username) do
-          Ecto.Query.from(u in User, 
-            where: u.name == ^vote.username, where: u.reputation < 51, where: u.reputation > -51, 
-            update: [inc: [reputation: ^finalAdjust]]
-          ) |> Repo.update_all([])
-        end
-      end
+        Ecto.Query.from(u in User, 
+          where: u.id == ^post.posterid, where: u.reputation > 0, 
+          update: [inc: [reputation: ^adjustValue]]
+        ) |> Repo.update_all([])
     end
   end
 

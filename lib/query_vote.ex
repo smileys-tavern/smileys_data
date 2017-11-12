@@ -19,10 +19,13 @@ defmodule SmileysData.QueryVote do
 
       case Repo.insert(changeset) do
         {:ok, _vote} ->
-          SmileysData.ContentSorting.DefaultSorter.user_adjust(post, user, room, 1)
+          # OC can result in reputational updates to users and rooms
+          if (post.parenttype == "room") do
+            SmileysData.ContentSorting.EigenSorter.user_adjust(post, user, room, 1)
 
-          if post.voteprivate > 220 do
-            SmileysData.ContentSorting.DefaultSorter.room_adjust(post, user, room, 1)
+            if post.voteprivate > 100 do
+              SmileysData.ContentSorting.EigenSorter.room_adjust(post, user, room, 1)
+            end
           end
 
           # TODO: refactor slightly to fix concurrency (update +=)
@@ -53,10 +56,12 @@ defmodule SmileysData.QueryVote do
 
       case Repo.insert(changeset) do
         {:ok, _vote} ->
-          SmileysData.ContentSorting.DefaultSorter.user_adjust(post, user, room, -1)
+          if (post.parenttype == "room") do
+            SmileysData.ContentSorting.EigenSorter.user_adjust(post, user, room, -1)
 
-          if post.voteprivate < -220 do
-            SmileysData.ContentSorting.DefaultSorter.room_adjust(post, user, room, -1)
+            if post.voteprivate < -220 do
+              SmileysData.ContentSorting.EigenSorter.room_adjust(post, user, room, -1)
+            end
           end
 
           vote_total = post.voteprivate - user.reputation

@@ -1,4 +1,12 @@
-defmodule SmileysData.ContentSorting.DefaultSorter do
+defmodule SmileysData.ContentSorting.EigenSorter do
+	@moduledoc """
+	A content sorting algorithm inspired by the EigenTrust algorithm.  The decay portions simply add a window of time to the trusted content
+	algorithm.  The reputation modifiers are an artificially slowed algorithm where over time after posting content, trust relationships
+	develop between interactions with users and eventually spread to rooms.  A room and users reputation will eventually cause their content
+	to not only rise faster, but also impact their search ranking.  Designed to be resilient against even high amounts of brigandiers. The
+	primary goal is to simulate a pub where democracy does not exist but instead people are accountable to actions and can therefor learn and
+	adjust.  Quoting The Orville: `A voice should be earned, not given away` and `I believe you are confusing opinion with knowledge`.
+	"""
 	@behaviour SmileysData.ContentSorting.ContentSorterBehaviour
 
 	alias SmileysData.ContentSorting.SortSettings
@@ -29,17 +37,34 @@ defmodule SmileysData.ContentSorting.DefaultSorter do
 	end
 
 	def user_adjust(%Post{} = post, %User{} = user, %Room{} = room, modifier) do
-		# TODO: refactor. not bad but can more efficiently allocate rep
-		QueryUser.update_user_reputation(post, user, room, modifier)
+	  amountAdjust = cond do
+	    SmileysData.QueryRoom.room_is_moderator(user.moderating, room.id) ->
+	      # Moderator: at least 1 point available
+	      1 + round(Enum.min([room.reputation, 30]) * 0.15)
+	    true ->
+	      round(Enum.min([user.reputation, 30]) * 0.15)
+	  end
 
-		:ok
+      if amountAdjust > 0 do
+        _ = QueryUser.update_user_reputation(post, modifier * amountAdjust)
+      end
+
+	  :ok
 	end
 
 	def room_adjust(%Post{} = _post, %User{} = user, %Room{} = room, modifier) do
-		# TODO: refactor. not bad but can more efficiently allocate rep
-		QueryRoom.update_room_reputation(user, room, modifier)
+	  amountAdjust = cond do
+        user.reputation >= 10 ->
+          1 + round(Enum.min([user.reputation, 70]) * 0.05)
+        true ->
+          0
+      end
 
-		:ok
+      if amountAdjust > 0 do
+      	_ = QueryRoom.update_room_reputation(room, modifier * amountAdjust)
+      end
+
+	  :ok
 	end
 
 	@doc """
@@ -48,4 +73,5 @@ defmodule SmileysData.ContentSorting.DefaultSorter do
 	def get_settings() do
 		%SortSettings{}
 	end
+
 end
