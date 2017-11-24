@@ -14,7 +14,7 @@ defmodule SmileysData.State.User.ActivityBucket do
 
   @max_activity_count 30
   @prune_amount 10
-  @activity_hours_to_live 72
+  @activity_hours_to_live 168
 
   # Init
 
