@@ -8,6 +8,7 @@ defmodule SmileysData.User do
     field :reputation, :integer, default: 1
     field :drinks, :integer, default: 0
     field :moderating, {:array, :map}, default: []
+    field :subscription_email, :string
     coherence_schema()
 
     timestamps()
@@ -15,7 +16,7 @@ defmodule SmileysData.User do
 
   def changeset(model, params \\ %{}) do
     model
-    |> cast(params, [:name, :email, :reputation, :drinks, :moderating] ++ coherence_fields())
+    |> cast(params, [:name, :email, :reputation, :drinks, :moderating, :subscription_email] ++ coherence_fields())
     |> validate_required([:name])
     |> validate_format(:email, ~r/@/)
     |> unique_constraint(:email)

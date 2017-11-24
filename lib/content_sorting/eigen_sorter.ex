@@ -31,7 +31,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	end
 
 	def decay_posts_termination() do
-	  %{terminator: {start_hour, end_hour}, depletion_ratio_terminator: ratio} = get_settings()
+	  %{time_window_terminator: {start_hour, end_hour}, depletion_ratio_terminator: ratio} = get_settings()
 
 	  SmileysData.QueryPost.decay_posts(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end

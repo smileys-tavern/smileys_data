@@ -2,7 +2,7 @@ defmodule SmileysData.QueryUser do
 
   require Ecto.Query
 
-  alias SmileysData.{User, Vote, ModeratorListing, Repo}
+  alias SmileysData.{User, ModeratorListing, Repo}
 
   @doc """
   Return full user data after querying by email
@@ -22,7 +22,17 @@ defmodule SmileysData.QueryUser do
   Return full user data after querying by id
   """
   def user_by_id(user_id) do
-    Repo.get(User, user_id)
+    User |> Repo.get(user_id)
+  end
+
+  @doc """
+  Return the relevant fields for a set of users queried by the given subscription type.
+  """
+  def users_by_email_subscription_type(subscription_type) do
+    User 
+      |> Ecto.Query.select([:id, :email, :name, :drinks])
+      |> Ecto.Query.where(subscription_email: ^subscription_type)
+      |> Repo.all
   end
 
   @doc """
