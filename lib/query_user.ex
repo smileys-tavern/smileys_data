@@ -136,6 +136,15 @@ defmodule SmileysData.QueryUser do
   end
 
   @doc """
+  Update the users subscription setting
+  """
+  def update_user_email_subscription(user, subscription_setting) do
+    changeset = User.changeset(user, %{"subscription_email" => subscription_setting})
+
+    Repo.update(changeset)
+  end
+
+  @doc """
   Return the permission set that applies to the passed User
   """
   def user_permission_level(_user) do
