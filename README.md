@@ -2,6 +2,8 @@
 
 Smileys Community Site data repository and associated logic
 
+**REFACTOR MODE smileys is now in code upgrade mode. The next few pushes will be unstable refactors that are undergoing testing until everything is in an acceptable state.  The 0.1.0 release will be when everything is considered copisthetic**
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
