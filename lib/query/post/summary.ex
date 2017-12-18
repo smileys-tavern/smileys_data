@@ -9,15 +9,15 @@ defmodule SmileysData.Query.Post.Summary do
   Return enough post data to show a summary of the post. No room specified
   """
   def get(limit) do
-    summary(limit, :vote, :nil)
+    get(limit, :vote, :nil)
   end
 
   def get(limit, order_by) do
-    summary(limit, order_by, :nil)
+    get(limit, order_by, :nil)
   end
 
   def get(limit, order_by, room_id) do
-    summary(limit, order_by, room_id, %{}, false)
+    get(limit, order_by, room_id, %{}, false)
   end
 
   def get(limit, order_by, room_id, request_params, show_private) do
@@ -39,7 +39,7 @@ defmodule SmileysData.Query.Post.Summary do
   Get post summaries by a list of post id's.
   """
   def by_ids(ids) do
-    post_summary_by_ids(ids, [])
+    by_ids(ids, [])
   end
 
   def by_ids([], acc) do
@@ -47,41 +47,43 @@ defmodule SmileysData.Query.Post.Summary do
   end
 
   def by_ids([id | tail], acc) do
-    post_summary_by_ids(tail, [query_post_summary_by_id(id)|acc])
+    by_ids(tail, [by_id(id)|acc])
   end
 
   @doc """
   Return enough post data to summarize posts, queried by specific room
   """
   def by_room(limit, order_by, room_id, request_params) do
-    summary(limit, order_by, room_id, request_params, true)
+    get(limit, order_by, room_id, request_params, true)
   end
 
-  defp add_order_by_to_query(post_query, order_by) do
-  	case order_by do
-      :alltime ->
-        post_query
-          |> Ecto.Query.order_by([p], desc: p.votealltime)
-      :vote ->
-        post_query
-          |> Ecto.Query.order_by([p], desc: p.voteprivate)
-      :new ->
-        post_query
-          |> Ecto.Query.order_by(desc: :inserted_at)
-      _ ->
-        post_query
-          |> Ecto.Query.order_by([p], desc: p.voteprivate)
-    end
+  defp add_order_by_to_query(post_query, :alltime) do
+    post_query
+      |> Ecto.Query.order_by([p], desc: p.votealltime)
+  end
+
+  defp add_order_by_to_query(post_query, :vote) do
+    post_query
+      |> Ecto.Query.order_by([p], desc: p.voteprivate)
+  end
+
+  defp add_order_by_to_query(post_query, :new) do
+    post_query
+      |> Ecto.Query.order_by(desc: :inserted_at)
+  end
+
+  defp add_order_by_to_query(post_query, _) do
+    post_query
+      |> Ecto.Query.order_by([p], desc: p.voteprivate)
+  end
+
+  defp add_room_id_to_query(post_query, :nil) do
+    post_query
   end
 
   defp add_room_id_to_query(post_query, room_id) do
-  	case room_id do
-      :nil ->
-        post_query
-      _ ->
-        post_query
-          |> Ecto.Query.where(parentid: ^room_id) 
-    end
+    post_query
+      |> Ecto.Query.where(parentid: ^room_id) 
   end
 
   defp query_check_for_privacy(post_query, show_private) do
@@ -94,7 +96,7 @@ defmodule SmileysData.Query.Post.Summary do
     end
   end
 
-  defp query_post_summary_by_id(id) do
+  defp by_id(id) do
     # I will return when a good deploy strat is available for mnesia or alternative cache implemented
     # postSummary = Amnesia.transaction do
     #  DbSmileyCache.PostSummary.read(id)

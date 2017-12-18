@@ -2,6 +2,10 @@ defmodule SmileysData.Query.Post.Comment do
   require Ecto.Query
 
   alias SmileysData.{Post, Room, Repo}
+  alias SmileysData.Query.Post.Helper
+  alias SmileysData.Query.Vote, as: QueryVote
+
+  @edit_msg "(edit) ?"
 
   @doc """
   Edit a post owned by the user
@@ -26,12 +30,12 @@ defmodule SmileysData.Query.Post.Comment do
   @doc """
   Create a comment
   """
-  def create_comment(replyToHash, opHash, body, depth, user) do
+  def create(replyToHash, opHash, body, depth, user) do
     op = Post |> Repo.get_by(hash: opHash)
     replyToPost = Post |> Repo.get_by(hash: replyToHash)
     room = Room |> Repo.get_by(id: op.superparentid)
 
-    case is_post_frequency_limit(user) do
+    case Helper.is_post_frequency_limit(user) do
       false ->
         changeset = Post.changeset(%Post{}, %{
           "body" => body, 
@@ -41,7 +45,7 @@ defmodule SmileysData.Query.Post.Comment do
           "parenttype" => "comment",
           "posterid" => user.id,
           "age" => 0,
-          "hash" => create_hash(user.id, room.name),
+          "hash" => Helper.create_hash(user.id, room.name),
           "votepublic" => 0,
           "voteprivate" => user.reputation,
           "votealltime" => user.reputation,
@@ -52,7 +56,7 @@ defmodule SmileysData.Query.Post.Comment do
           {:ok, post} ->
             if (user.name != "amysteriousstranger") do
               # TODO: move this out
-              SmileysData.QueryVote.upvote(post, user)
+              QueryVote.up(post, user)
 
               post = put_in post.votepublic, 1
 

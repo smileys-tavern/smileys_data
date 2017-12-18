@@ -3,6 +3,9 @@ defmodule SmileysData.Query.Post.Thread do
 
 	alias SmileysData.{Comment, Repo}
 
+	@thread_query_focus_max 100
+	@thread_query_max 50
+
 	@doc """
 	Retrieve a thread of comments complete with the level the comment exists at in the chain. A complex performance and cache architecture 
 	sensitive query so we avoid the ORM for full control

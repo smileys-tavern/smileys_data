@@ -1,4 +1,6 @@
 defmodule SmileysData.Query.Sort.Posts do
+  alias SmileysData.Repo
+
   @doc """
   Lower private vote value for posts that fall within an upper and lower time bound by the given
   ratio.

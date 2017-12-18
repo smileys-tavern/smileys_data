@@ -2,6 +2,7 @@ defmodule SmileysData.GuardianSerializer do
   @behaviour Guardian.Serializer
 
   alias SmileysData.User
+  alias SmileysData.Query.User, as: QueryUser
 
   require Logger
 
@@ -16,7 +17,7 @@ defmodule SmileysData.GuardianSerializer do
   end
 
   def from_token("User:" <> id) do
-  	{:ok, SmileysData.QueryUser.user_by_id(id)}
+  	{:ok, QueryUser.by_id(id)}
   end
 
   def from_token(_) do

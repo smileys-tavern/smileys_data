@@ -1,11 +1,11 @@
-defmodule SmileysData.QueryVote do
-
+defmodule SmileysData.Query.Vote do
+  
   require Ecto.Query
 
   alias SmileysData.{Post, Room, Vote, Repo}
 
 
-  def upvote(post, user) do
+  def up(post, user) do
   	changeset = Vote.changeset(%Vote{}, %{"username" => user.name, "postid" => post.id, "vote" => Integer.to_string(user.reputation)})
 
     # If greater than 3 days ago, no longer can vote
@@ -42,7 +42,7 @@ defmodule SmileysData.QueryVote do
     end
   end
 
-  def downvote(post, user) do
+  def down(post, user) do
     changeset = Vote.changeset(%Vote{}, %{"username" => user.name, "postid" => post.id, "vote" => Integer.to_string(user.reputation * -1)})
 
     # If greater than 3 days ago, no longer can vote

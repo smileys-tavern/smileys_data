@@ -10,35 +10,39 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	@behaviour SmileysData.ContentSorting.ContentSorterBehaviour
 
 	alias SmileysData.ContentSorting.SortSettings
-	alias SmileysData.{Post, User, Room, QueryUser, QueryRoom}
+	alias SmileysData.{Post, User, Room}
+	alias SmileysData.Query.Sort.Posts, as: SortPosts
+	alias SmileysData.Query.User, as: QueryUser
+	alias SmileysData.Query.User.Moderator, as: QueryUserModerator
+	alias SmileysData.Query.Room, as: QueryRoom
 
 	def decay_posts_new() do
 	  %{time_window_new: {start_hour, end_hour}, depletion_ratio_new: ratio} = get_settings()
 
-	  SmileysData.QueryPost.decay_posts(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
+	  SortPosts.decay(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end
   
 	def decay_posts_medium() do
 	  %{time_window_medium: {start_hour, end_hour}, depletion_ratio_medium: ratio} = get_settings()
 
-	  SmileysData.QueryPost.decay_posts(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
+	  SortPosts.decay(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end
 
 	def decay_posts_long() do
 	  %{time_window_long: {start_hour, end_hour}, depletion_ratio_long: ratio} = get_settings()
 
-	  SmileysData.QueryPost.decay_posts(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
+	  SortPosts.decay(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end
 
 	def decay_posts_termination() do
 	  %{time_window_terminator: {start_hour, end_hour}, depletion_ratio_terminator: ratio} = get_settings()
 
-	  SmileysData.QueryPost.decay_posts(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
+	  SortPosts.decay(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end
 
 	def user_adjust(%Post{} = post, %User{} = user, %Room{} = room, modifier) do
 	  amountAdjust = cond do
-	    SmileysData.QueryRoom.room_is_moderator(user.moderating, room.id) ->
+	    QueryUserModerator.moderating_room(user.moderating, room.id) ->
 	      # Moderator: at least 1 point available
 	      1 + round(Enum.min([room.reputation, 30]) * 0.15)
 	    true ->
@@ -46,7 +50,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	  end
 
       if amountAdjust > 0 do
-        _ = QueryUser.update_user_reputation(post, modifier * amountAdjust)
+        _ = QueryUser.update_reputation(post, modifier * amountAdjust)
       end
 
 	  :ok
@@ -61,7 +65,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
       end
 
       if amountAdjust > 0 do
-      	_ = QueryRoom.update_room_reputation(room, modifier * amountAdjust)
+      	_ = QueryRoom.update_reputation(room, modifier * amountAdjust)
       end
 
 	  :ok

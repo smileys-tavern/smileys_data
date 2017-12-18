@@ -1,4 +1,7 @@
 defmodule SmileysData.Query.Post.Anonymous do
+
+  alias SmileysData.{AnonymousPost, Repo}
+
   @doc """
   Record the happening of an anonymous post
   """

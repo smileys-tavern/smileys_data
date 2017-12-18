@@ -1,7 +1,11 @@
 defmodule SmileysData.Query.Post.Moderator do
   require Ecto.Query
 
-  alias SmileysData.{Post, Room, PostMeta, QueryRoom, Repo}
+  alias SmileysData.Query.Post.Comment
+  alias SmileysData.{Post, Room, PostMeta, Repo}
+  alias SmileysData.Query.User.Moderator, as: QueryUserModerator
+
+  @delete_msg "Deleted by moderator ?"
 
   @doc """
   Edit a comment based on a moderator action.
@@ -22,18 +26,18 @@ defmodule SmileysData.Query.Post.Moderator do
       op    = Post |> Repo.get_by(hash: hash)
       room  = Room |> Repo.get_by(id: op.superparentid)
 
-      case QueryRoom.room_is_moderator(user.moderating, room.id) do
+      case QueryUserModerator.moderating_room(user.moderating, room.id) do
         false ->
           {:not_mod, nil}
         _type_mod ->
-          editedComment = case edit_post_by_moderator(op, user) do
+          editedComment = case edit(op, user) do
             {:ok, edited_comment} ->
               edited_comment
             _ ->
               nil
           end
 
-          newComment = case create_comment(hash, op_hash, mod_comment, depth, user) do
+          newComment = case Comment.create(hash, op_hash, mod_comment, depth, user) do
             {:ok, created_comment} ->
               created_comment
             _ ->
