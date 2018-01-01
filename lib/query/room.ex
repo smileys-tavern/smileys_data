@@ -42,14 +42,14 @@ defmodule SmileysData.Query.Room do
   @doc """
   Create a room given a changeset
   """
-  def create(%Room{} = changeset) do
+  def create(changeset) do
     Repo.insert(changeset)
   end
 
   @doc """
   Update a room via changeset
   """
-  def update(%Room{} = changeset) do
+  def update(changeset) do
     Repo.update(changeset)
   end
 end

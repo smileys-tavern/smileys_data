@@ -1,4 +1,11 @@
 defmodule SmileysData.Query.User.Helper do
+  @moduledoc """
+  A module of helpful functionality related directly to users
+  """
+
+  @doc """
+  Create a unique hash to represent a user by their ip
+  """
   def create_hash(user_ip) do
   	# TODO: move salt to a config and change it
     s = Hashids.new([

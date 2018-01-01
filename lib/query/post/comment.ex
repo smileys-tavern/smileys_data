@@ -10,7 +10,7 @@ defmodule SmileysData.Query.Post.Comment do
   @doc """
   Edit a post owned by the user
   """
-  def edit_comment(hash, body, user) do
+  def edit(hash, body, user) do
     op = Post |> Repo.get_by(hash: hash)
 
     if op.posterid != user.id do
@@ -55,7 +55,7 @@ defmodule SmileysData.Query.Post.Comment do
         case Repo.insert(changeset) do
           {:ok, post} ->
             if (user.name != "amysteriousstranger") do
-              # TODO: move this out
+              # TODO: move this out, too much logic in data lib
               QueryVote.up(post, user)
 
               post = put_in post.votepublic, 1

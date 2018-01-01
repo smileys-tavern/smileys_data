@@ -26,14 +26,14 @@ defmodule SmileysData.Query.Room.Allow do
   @doc """
   Add a record allowing a user in room
   """
-  def create(%UserRoomAllow{} = changeset) do
+  def create(changeset) do
     Repo.insert(changeset)
   end
 
   @doc """
   Remove a record allowing a user in room
   """
-  def user_room_allow_delete(user_room_allow_record) do
+  def delete(user_room_allow_record) do
     Repo.delete!(user_room_allow_record)
   end
 
