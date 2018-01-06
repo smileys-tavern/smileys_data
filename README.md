@@ -2,7 +2,7 @@
 
 Smileys Community Site data repository and associated logic
 
-**REFACTOR MODE smileys is now in code upgrade mode. The next few pushes will be unstable refactors that are undergoing testing until everything is in an acceptable state.  The 0.1.0 release will be when everything is considered copisthetic**
+**Refactor mode complete.  There are still many improvements that can be made but the major reorg is finished, meaning future improvements are less impactful and can now be included with feature releases**
 
 ## Installation
 
@@ -11,7 +11,7 @@ by adding `smileys_data` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:smileys_data, "~> 0.0.6"}]
+  [{:smileys_data, "~> 0.1.2"}]
 end
 ```
 
