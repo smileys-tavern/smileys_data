@@ -3,7 +3,7 @@ defmodule SmileysData.Mixfile do
 
   def project do
     [app: :smileysdata,
-     version: "0.0.6",
+     version: "0.1.2",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -28,9 +28,8 @@ defmodule SmileysData.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:phoenix_ecto, "~> 3.0"},
-     {:kerosene, "~> 0.5.0"},
-     {:coherence, "~> 0.5.0"},
+    [{:phoenix_ecto, "~> 4.0"},
+     {:kerosene, "~> 0.9.0"},
      {:hashids, "~> 2.0"},
      {:hackney, "~> 1.9", override: true},
      {:html_sanitize_ex, "~> 1.0.0"},

@@ -2,7 +2,7 @@ defmodule SmileysData.Query.User.Subscription do
 
   require Ecto.Query
 
-  alias SmileysData.{Repo, User, UserSubscription, UserRoomAllow}
+  alias SmileysData.{Repo, UserSubscription, UserRoomAllow}
 
   @doc """
   Create a single user subscription to the passed room and pass tuple {:ok, subscription} on success
@@ -116,8 +116,9 @@ defmodule SmileysData.Query.User.Subscription do
   @doc """
   Update the users subscription setting
   """
-  def update_email(%User{} = user, subscription_setting) do
-    changeset = User.changeset(user, %{"subscription_email" => subscription_setting})
+  def update_email(%{} = _user, subscription_setting) do
+    #changeset = User.changeset(user, %{"subscription_email" => subscription_setting})
+    changeset = %{"subscription_email" => subscription_setting}
 
     Repo.update(changeset)
   end

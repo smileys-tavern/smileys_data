@@ -1,7 +1,7 @@
 defmodule SmileysData.Query.Post do
   require Ecto.Query
 
-  alias SmileysData.{Post, Room, PostMeta, User, Repo}
+  alias SmileysData.{Post, Room, PostMeta, Repo}
   alias SmileysData.Query.Post.Helper
   alias SmileysData.Query.Vote, as: QueryVote
 
@@ -22,11 +22,11 @@ defmodule SmileysData.Query.Post do
   @doc """
   Retrieve the latest posts a user made
   """
-  def by_user_latest(%User{} = user, limit) do
+  def by_user_latest(%{} = user, limit) do
     by_user_latest(user, limit, true)
   end
 
-  def by_user_latest(%User{} = user, limit, include_private) do
+  def by_user_latest(%{} = user, limit, include_private) do
     case user do
       nil -> 
         []

@@ -1,8 +1,6 @@
 # SmileysData
 
-Smileys Community Site data repository and associated logic
-
-**Refactor mode complete.  There are still many improvements that can be made but the major reorg is finished, meaning future improvements are less impactful and can now be included with feature releases**
+NOTE: This was a learning project and was rushed in many areas. The Smileys website refactor will coincide with this project getting a big facelift.
 
 ## Installation
 

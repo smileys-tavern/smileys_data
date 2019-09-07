@@ -1,6 +1,6 @@
 defmodule SmileysData.ContentSorting.ContentSorterBehaviour do
   alias SmileysData.ContentSorting.SortSettings
-  alias SmileysData.{User, Room, Post}
+  alias SmileysData.{Room, Post}
 
   # Adjustments directly to post vote score
   @callback decay_posts_new() :: {:ok, number} | {:error, String.t}
@@ -15,8 +15,8 @@ defmodule SmileysData.ContentSorting.ContentSorterBehaviour do
 
   # Adjustments to entities that strengthen or weaken the individual vote contracts
   # TODO: refactor these two. too awkward and useless as a behavior
-  @callback user_adjust(%Post{}, %User{}, %Room{}, number) :: :ok | {:error, String.t}
+  @callback user_adjust(%Post{}, %{}, %Room{}, number) :: :ok | {:error, String.t}
 
-  @callback room_adjust(%Post{}, %User{}, %Room{}, number) :: :ok | {:error, String.t}
+  @callback room_adjust(%Post{}, %{}, %Room{}, number) :: :ok | {:error, String.t}
 
 end

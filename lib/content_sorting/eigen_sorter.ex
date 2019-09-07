@@ -10,7 +10,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	@behaviour SmileysData.ContentSorting.ContentSorterBehaviour
 
 	alias SmileysData.ContentSorting.SortSettings
-	alias SmileysData.{Post, User, Room}
+	alias SmileysData.{Post, Room}
 	alias SmileysData.Query.Sort.Posts, as: SortPosts
 	alias SmileysData.Query.User, as: QueryUser
 	alias SmileysData.Query.User.Moderator, as: QueryUserModerator
@@ -40,7 +40,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	  SortPosts.decay(Float.to_string(ratio), "INTERVAL '" <> Integer.to_string(end_hour) <> " hours'", "INTERVAL '" <> Integer.to_string(start_hour) <> " hour'")
 	end
 
-	def user_adjust(%Post{} = post, %User{} = user, %Room{} = room, modifier) do
+	def user_adjust(%Post{} = post, %{} = user, %Room{} = room, modifier) do
 	  amountAdjust = cond do
 	    QueryUserModerator.moderating_room(user.moderating, room.id) ->
 	      # Moderator: at least 1 point available
@@ -56,7 +56,7 @@ defmodule SmileysData.ContentSorting.EigenSorter do
 	  :ok
 	end
 
-	def room_adjust(%Post{} = _post, %User{} = user, %Room{} = room, modifier) do
+	def room_adjust(%Post{} = _post, %{} = user, %Room{} = room, modifier) do
 	  amountAdjust = cond do
         user.reputation >= 10 ->
           1 + round(Enum.min([user.reputation, 70]) * 0.05)
